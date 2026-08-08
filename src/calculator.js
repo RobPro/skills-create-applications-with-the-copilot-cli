@@ -11,38 +11,12 @@
 //   node src/calculator.js              -> interactive mode
 
 const readline = require('readline');
+const { compute, toNumber } = require('./lib/calculator');
 
 function printUsage() {
   console.log('Usage: node src/calculator.js <operation> <num1> <num2>');
   console.log('Operations: add, sub, mul, div');
   console.log('Or run with no args for interactive mode.');
-}
-
-function toNumber(str) {
-  const n = Number(str);
-  return Number.isFinite(n) ? n : NaN;
-}
-
-function compute(op, a, b) {
-  // Supported operations commented at top
-  switch (op) {
-    case 'add':
-      return a + b;
-    case 'sub':
-      return a - b;
-    case 'mul':
-      return a * b;
-    case 'div':
-      if (b === 0) {
-        console.error('Error: Division by zero');
-        process.exit(2);
-      }
-      return a / b;
-    default:
-      console.error(`Unknown operation: ${op}`);
-      printUsage();
-      process.exit(1);
-  }
 }
 
 function runNonInteractive(args) {
@@ -60,8 +34,18 @@ function runNonInteractive(args) {
     process.exit(1);
   }
 
-  const result = compute(op, a, b);
-  console.log(result);
+  try {
+    const result = compute(op, a, b);
+    console.log(result);
+  } catch (e) {
+    if (e && e.code === 'DIV_BY_ZERO') {
+      console.error('Error: Division by zero');
+      process.exit(2);
+    }
+    console.error(e.message || String(e));
+    printUsage();
+    process.exit(1);
+  }
 }
 
 function runInteractive() {
@@ -79,8 +63,20 @@ function runInteractive() {
           process.exit(1);
         }
 
-        const result = compute(op.trim(), a, b);
-        console.log(result);
+        try {
+          const result = compute(op.trim(), a, b);
+          console.log(result);
+        } catch (e) {
+          if (e && e.code === 'DIV_BY_ZERO') {
+            console.error('Error: Division by zero');
+            rl.close();
+            process.exit(2);
+          }
+          console.error(e.message || String(e));
+          rl.close();
+          process.exit(1);
+        }
+
         rl.close();
       });
     });
